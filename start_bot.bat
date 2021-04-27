@@ -1,6 +1,8 @@
+@echo off
+
 :start
 
 php artisan get:updates
-TIMEOUT /T 5
+TIMEOUT /T 1
 
 goto start
