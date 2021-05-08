@@ -22,3 +22,5 @@ Route::get('/phpinfo', function () {
 Route::get('/is-palindrome/',[PhraseController::class, 'isPalindrome'])->middleware('phrase');
 
 Route::get('/ip/',[IpController::class, 'showIp']);
+
+Route::get('/kt/{number}',[IpController::class, 'getKt']);
