@@ -20,9 +20,6 @@ class CreateSubjectsTable extends Migration
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
 
-            $table->unsignedBigInteger('id_stats_subject');
-            $table->foreign('id_stats_subject')->references('id')->on('subject_stats')->onDelete('cascade');
-
             $table->timestamps();
         });
     }

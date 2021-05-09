@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\PhraseRequest;
-use App\Services\PhraseService;
+use App\Services\ParserKT\ParserKT\ParserKT\PhraseService;
 
 
 class PhraseController extends Controller

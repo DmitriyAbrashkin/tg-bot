@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\ArrToStrKtService;
-use App\Services\IpService;
+use App\Services\ParserKT\ParserKT\ParserKT\ArrToStrKtService;
+use App\Services\ParserKT\ParserKT\ParserKT\IpService;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
-use App\Services\ParserKtService;
+use App\Services\ParserKT\ParserKT\ParserKT\ParserKtService;
 
 class IpController extends Controller
 {
