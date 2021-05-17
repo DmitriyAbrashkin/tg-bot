@@ -19,6 +19,8 @@ class CreateUsersTable extends Migration
             $table->string('last_name');
             $table->string('username');
             $table->integer('student_number');
+            $table->integer('count_money')->nullable();
+            $table->integer('level')->nullable();
             $table->timestamps();
         });
     }

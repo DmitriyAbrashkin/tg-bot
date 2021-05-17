@@ -3,10 +3,14 @@
 
 namespace App\Services;
 
+use App\Jobs\ProcessPomodoroTimer;
+use App\Models\Subject;
 use App\Services\ParserKT\ArrToStrKtService;
 use App\Services\ParserKT\ParserKtService;
 use GuzzleHttp\Client;
 use Predis\Client as Predis;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class MessageService
 {
@@ -50,8 +54,9 @@ class MessageService
                 if (isset($result['message']['text'])) {
                     $this->predisClient->set('update_id', $result['update_id']);
                     $phrase = $result['message']['text'];
-                    $chatId = $result['message']['from']['id'];
 
+                    $chatId = $result['message']['from']['id'];
+                    Log::channel('daily')->info(': Сообщение от : '. $result['message']['from']['username'] . ' - ' . $phrase );
 
                     $fucName = $this->predisClient->get($chatId);
                     if ($fucName != null && method_exists($this, $fucName)) {
@@ -76,11 +81,7 @@ class MessageService
                                     $this->sendMessages($chatId, 'Напишите номер зачетки');
                                 }
                                 break;
-                            case 'Добавить категорию':
-                                $this->setNextHandler($chatId, 'addSubject');
-                                $this->sendMessages($chatId, 'Введите название категории:');
-                                break;
-                            case 'Посмотреть все категории':
+                            case 'Предметы':
                                 $this->showAllSubject($chatId);
                                 break;
 
@@ -94,7 +95,7 @@ class MessageService
 
                     $chatId = $result['callback_query']['from']['id'];
                     $phrase = $result['callback_query']['data'];
-
+                    $this->answerCallbackQuery($result['callback_query']);
 
                     $this->actionInlineButtonSubjects($chatId, $phrase);
                 }
@@ -114,11 +115,12 @@ class MessageService
     public function actionInlineButtonSubjects($chatId, $callback_data)
     {
         $params = explode("_", $callback_data);
-        if($params[0] = 'showTaskForSubjectId'){
-            $asnser = $this->tasksService->getTasksForSubject($params[1]);
-            $this->sendMessages($chatId, 'Описание задачи', $asnser);
-        }
+        if ($params[0] = 'startPomodoroForId') {
+            $subject = Subject::findOrFail($params[1]);
+            $job = (new ProcessPomodoroTimer($subject));
+            dispatch($job)->delay(now()->addMinutes(1));
 
+        }
     }
 
 
@@ -132,6 +134,18 @@ class MessageService
             ]
         ]);
     }
+
+    public function answerCallbackQuery($callback_data)
+    {
+        $response = $this->client->request('GET', 'answerCallbackQuery', [
+            'query' => [
+                "callback_query_id" => $callback_data["id"],
+                "text" => "Помидор установлен",
+                "alert" => true
+            ]
+        ]);
+    }
+
 
     public function setNextHandler($chatId, $funcName): void
     {
@@ -147,10 +161,12 @@ class MessageService
                 $this->sendMessages($chatId, $this->arrToKtService->toStr($studentInfo));
 
                 if (!$isSave) {
-                    $this->predisClient->set('sn' . $chatId, $phrase);
-                    $this->setNextHandler($chatId, 'saveStudentNumber');
-                    $this->sendMessages($chatId, 'Сохранить этот номер зачетки для последующих запросов?');
+                    //$this->predisClient->set('sn' . $chatId, $phrase);
+                    //$this->setNextHandler($chatId, 'saveStudentNumber');
+                    // $this->sendMessages($chatId, 'Сохранить этот номер зачетки для последующих запросов?');
+                    $this->subjectService->saveSubjects($studentInfo, $chatId);
                 }
+                $this->setNextHandler($chatId, null);
             } catch (\Exception $exception) {
                 $this->sendMessages($chatId, 'Что-то пошло не так. Попробуйте позже');
                 $this->setNextHandler($chatId, null);
@@ -173,22 +189,7 @@ class MessageService
     {
         $subjects = $this->subjectService->getAllForUser($chatId);
         $answer = $this->subjectService->getAnswerAllSubject($subjects);
-        $this->sendMessages($chatId, 'Категории:', $answer);
+        $this->sendMessages($chatId, 'Предметы:', $answer);
     }
 
 }
-
-/*
- * TODO:
- *  - Выдавать все задачи по нажатию кнопки(с кнопками редактировать, удалить и начать задачу(время начала и время конца))
- *  - потом для отчетности - время потраченное на задачу: сумма разниц времен всех записей для этой задачи
- *  - Добавлять задачу
- *  - Таблица с записями о задачах кт начинали/закончили
- *  -   - ид
- *  -   - ид задачи
- *  -   - дата-время начала задачи
- *  -   - дата-время конца задачи
- *  - Выдавать категории (название и три кнопки (отредактировать, удалить, показать задачи))
- *  -
- *  -
- * */

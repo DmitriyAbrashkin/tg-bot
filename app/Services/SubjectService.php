@@ -5,6 +5,9 @@ namespace App\Services;
 
 
 use App\Models\Subject;
+use App\Services\ParserKT\ParserKtService;
+use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 
 class SubjectService
 {
@@ -22,6 +25,14 @@ class SubjectService
         return Subject::all()->where('user_id', $id);
     }
 
+    public function saveSubjects(ParserKtService $studentInfo, $chatId)
+    {
+        foreach ($studentInfo->studyInfo as $item) {
+            $this->addSubject($item->nameDiscipline, $chatId);
+        }
+    }
+
+
     public function getAnswerAllSubject($subjects)
     {
         $buttons = [];
@@ -31,24 +42,11 @@ class SubjectService
 
                 [
                     "text" => $subject->name,
-                    "callback_data" => "showTaskForSubjectId_" . $subject->id,
+                    "callback_data" => "startPomodoroForId_" . $subject->id,
                 ],
-
-                [
-                    "text" => "Удалить",
-                    "callback_data" => "deleteSubjectId_" . $subject->id,
-                ],
-
-                [
-                    "text" => 'Ред.',
-                    "callback_data" => "editSubjectId_" . $subject->id,
-                ]
-
             ];
         }
 
-
-        var_dump(json_encode($buttons, true));
         return json_encode($buttons, true);
     }
 }

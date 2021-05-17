@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\ParserKT\ParserKT\ParserKT\ArrToStrKtService;
-use App\Services\ParserKT\ParserKT\ParserKT\IpService;
+use App\Services\ParserKT\ArrToStrKtService;
+use App\Services\ParserKT\IpService;
+use App\Services\SubjectService;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
-use App\Services\ParserKT\ParserKT\ParserKT\ParserKtService;
+use App\Services\ParserKT\ParserKtService;
 
 class IpController extends Controller
 {
@@ -28,24 +29,13 @@ class IpController extends Controller
     public function getKt($number)
     {
 
-        /* $studentInfo = new ParserKtService();
+         $studentInfo = new ParserKtService();
          $studentInfo->getInfoAboutStudent($number);
          $this->arrToKtService->toStr($studentInfo);
-         $studentInfo->saveInfoAboutStudent(1);*/
+         $subjectService = new SubjectService();
+         $subjectService->saveSubjects($studentInfo, 436545935);
 
-        /* $this->client = new Client(
-             ['base_uri' => 'https://portal.kuzstu.ru/api/groups']
-         );
-
-         $response = $this->client->request('GET');
-         $messages = json_decode($response->getBody()->getContents(), true);
-         dd($messages);*/
-        $fucName = 'test';
-
-        dd(__METHOD__);
-
-
-        return response()->json($studentInfo, 200, array('Content-Type' => 'application/json;charset=utf8'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+         return response()->json($studentInfo, 200, array('Content-Type' => 'application/json;charset=utf8'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
 

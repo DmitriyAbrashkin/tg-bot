@@ -18,6 +18,7 @@ class PhraseController extends Controller
     public function isPalindrome(PhraseRequest $request)
     {
         $result = $this->phaseService->isPalindrome($request->phrase);
+        
 
         return response($result, 200);
     }
