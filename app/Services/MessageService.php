@@ -97,6 +97,9 @@ class MessageService
                             case 'Предметы':
                                 $this->showAllSubject($chatId);
                                 break;
+                            case 'Помощь':
+                                $this->sendMessages($chatId, 'https://telegra.ph/Kak-rabotat-s-botom-05-20');
+                                break;
                             default:
                                 $this->sendMessages($chatId, 'Неизвестная команда');
                                 break;
