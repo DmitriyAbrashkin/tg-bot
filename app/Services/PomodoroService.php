@@ -15,14 +15,10 @@ class PomodoroService
         $this->messageService = new MessageService();
     }
 
-    public function checkPomodoro(Subject $subject){
-            $this->messageService->sendMessages($subject->user_id, 'Ваш помидор истек, вам начисленна 1 монетка. Так держать!');
-
-            $user = User::find($subject->user_id);
-            $user->count_money += 1;
-            $user->save();
-
-            $subject->death_time = null;
-            $subject->save();
+    public function checkPomodoro(Subject $subject)
+    {
+        $this->messageService->sendMessages($subject->user_id, 'Ваш помидор истек, вам начисленна 1 монетка. Так держать!');
+        $subject->count_pomodoro += 1;
+        $subject->save();
     }
 }

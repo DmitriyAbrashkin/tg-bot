@@ -20,7 +20,7 @@ class CreateSubjectsTable extends Migration
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
 
-            $table->dateTime('death_time')->nullable();
+            $table->integer('count_pomodoro')->default(0);
 
             $table->timestamps();
         });

@@ -100,6 +100,9 @@ class MessageService
                             case 'Помощь':
                                 $this->sendMessages($chatId, 'https://telegra.ph/Kak-rabotat-s-botom-05-20');
                                 break;
+                            case 'Статистика':
+                                $this->statistics($chatId);
+                                break;
                             default:
                                 $this->sendMessages($chatId, 'Неизвестная команда');
                                 break;
@@ -119,6 +122,28 @@ class MessageService
     }
 
 
+    public function statistics($chatId)
+    {
+        $user = $this->userService->getInfoAboutUser($chatId);
+        $subjects = $this->subjectService->getAllForUser($chatId);
+        $allPomodoro = 0;
+        $result = '';
+        foreach ($subjects as $subject) {
+            $result .= $subject->name . ' -  ' . $subject->count_pomodoro . PHP_EOL;
+            $allPomodoro += $subject->count_pomodoro;
+        }
+
+        $this->sendMessages(
+            $chatId,
+            $user->first_name . PHP_EOL .
+            'Уровень ' . $user->level . PHP_EOL .
+            'Время помидора ' . $user->pomodoro_time . PHP_EOL .
+            $result . PHP_EOL .
+            'Всего помидоров ' . $allPomodoro
+
+        );
+    }
+
     public function addSubject($phrase, $chatId)
     {
         $this->subjectService->addSubject($phrase, $chatId);
@@ -133,7 +158,8 @@ class MessageService
         if ($params[0] = 'startPomodoroForId') {
             $subject = Subject::findOrFail($params[1]);
             $job = (new ProcessPomodoroTimer($subject));
-            dispatch($job)->delay(now()->addMinutes(1));
+            $pomodoro_time = $this->userService->getInfoAboutUser($chatId)->pomodoro_time;
+            dispatch($job)->delay(now()->addMinutes($pomodoro_time));
 
         }
     }
