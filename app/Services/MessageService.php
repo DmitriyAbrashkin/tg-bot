@@ -56,7 +56,7 @@ class MessageService
                     $phrase = $result['message']['text'];
 
                     $chatId = $result['message']['from']['id'];
-                    Log::channel('daily')->info(': Сообщение от : '. $result['message']['from']['username'] . ' - ' . $phrase );
+                    Log::channel('daily')->info(': Сообщение от : ' . $result['message']['from']['username'] . ' - ' . $phrase);
 
                     $fucName = $this->predisClient->get($chatId);
                     if ($fucName != null && method_exists($this, $fucName)) {
@@ -161,12 +161,15 @@ class MessageService
                 $this->sendMessages($chatId, $this->arrToKtService->toStr($studentInfo));
 
                 if (!$isSave) {
-                    //$this->predisClient->set('sn' . $chatId, $phrase);
-                    //$this->setNextHandler($chatId, 'saveStudentNumber');
-                    // $this->sendMessages($chatId, 'Сохранить этот номер зачетки для последующих запросов?');
-                    $this->subjectService->saveSubjects($studentInfo, $chatId);
+                    $this->predisClient->set('sn' . $chatId, $phrase);
+                    $this->predisClient->set('si'.$chatId,  serialize($studentInfo));
+                    $this->setNextHandler($chatId, 'saveStudentNumber');
+                    $this->sendMessages($chatId, 'Сохранить этот номер зачетки для последующих запросов?');
+
+
+                } else {
+                    $this->setNextHandler($chatId, null);
                 }
-                $this->setNextHandler($chatId, null);
             } catch (\Exception $exception) {
                 $this->sendMessages($chatId, 'Что-то пошло не так. Попробуйте позже');
                 $this->setNextHandler($chatId, null);
@@ -179,8 +182,15 @@ class MessageService
     public function saveStudentNumber($phrase, $chatId)
     {
         if ($phrase == 'Да') {
+
             $studentNumber = $this->predisClient->get('sn' . $chatId);
+            $studentInfo = unserialize($this->predisClient->get('si' . $chatId));
+            $this->subjectService->saveSubjects($studentInfo, $chatId);
             $this->userService->saveStudentNumber($chatId, $studentNumber);
+
+            $this->sendMessages($chatId, 'Успешно сохранено');
+        } else {
+            $this->sendMessages($chatId, 'Хорошо ;)');
         }
         $this->setNextHandler($chatId, null);
     }
