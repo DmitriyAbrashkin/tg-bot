@@ -22,6 +22,7 @@ class MessageService
     private $userService;
     private $subjectService;
     private $tasksService;
+    private $keyBoardService;
 
     public function __construct()
     {
@@ -35,6 +36,7 @@ class MessageService
         $this->userService = new UserService();
         $this->subjectService = new SubjectService();
         $this->tasksService = new TaskService();
+        $this->keyBoardService = new KeyboardService();
 
     }
 
@@ -64,27 +66,37 @@ class MessageService
                     } else {
                         switch ($phrase) {
                             case '/start':
+
                                 $this->userService->saveInfoAboutUser(
                                     $result['message']['from']['first_name'],
                                     $result['message']['from']['last_name'],
                                     $result['message']['from']['username'],
                                     $chatId
                                 );
-                                $this->sendMessages($chatId, 'Привет {рассказать про функции}');
+
+                                $this->sendMessages(
+                                    $chatId,
+                                    'Привет {рассказать про функции}',
+                                    $this->keyBoardService->getMainKeyboard()
+                                );
+
                                 break;
-                            case 'КТ':
+                            case 'Мои КТ':
                                 $user = $this->userService->getInfoAboutUser($chatId);
                                 if ($user != null && $user->student_number != null) {
-                                    $this->getKT($user->student_number, $chatId, true);
+                                    $this->getMyKT($user->student_number, $chatId, false);
                                 } else {
-                                    $this->setNextHandler($chatId, 'getKT');
+                                    $this->setNextHandler($chatId, 'getMyKT');
                                     $this->sendMessages($chatId, 'Напишите номер зачетки');
                                 }
+                                break;
+                            case 'КТ':
+                                $this->setNextHandler($chatId, 'getKT');
+                                $this->sendMessages($chatId, 'Напишите номер зачетки');
                                 break;
                             case 'Предметы':
                                 $this->showAllSubject($chatId);
                                 break;
-
                             default:
                                 $this->sendMessages($chatId, 'Неизвестная команда');
                                 break;
@@ -152,7 +164,24 @@ class MessageService
         $this->predisClient->set($chatId, $funcName);
     }
 
-    public function getKT($phrase, $chatId, $isSave = false)
+    public function getKT($phrase, $chatId)
+    {
+        if (ctype_digit($phrase)) {
+            $studentInfo = new ParserKtService();
+            try {
+                $studentInfo->getInfoAboutStudent($phrase);
+                $this->sendMessages($chatId, $this->arrToKtService->toStr($studentInfo));
+            } catch (\Exception $ex) {
+                $this->sendMessages($chatId, 'Что-то пошло не так. Попробуйте позже');
+            } finally {
+                $this->setNextHandler($chatId, null);
+            }
+        } else {
+            $this->sendMessages($chatId, 'Неккоректный номер зачетки' . PHP_EOL . 'Пожалуйста, повторите попытку.');
+        }
+    }
+
+    public function getMyKT($phrase, $chatId, $isNeedToSave = true)
     {
         if (ctype_digit($phrase)) {
             $studentInfo = new ParserKtService();
@@ -160,11 +189,15 @@ class MessageService
                 $studentInfo->getInfoAboutStudent($phrase);
                 $this->sendMessages($chatId, $this->arrToKtService->toStr($studentInfo));
 
-                if (!$isSave) {
+                if ($isNeedToSave) {
                     $this->predisClient->set('sn' . $chatId, $phrase);
-                    $this->predisClient->set('si'.$chatId,  serialize($studentInfo));
+                    $this->predisClient->set('si' . $chatId, serialize($studentInfo));
                     $this->setNextHandler($chatId, 'saveStudentNumber');
-                    $this->sendMessages($chatId, 'Сохранить этот номер зачетки для последующих запросов?');
+                    $this->sendMessages(
+                        $chatId,
+                        'Сохранить этот номер зачетки для последующих запросов?',
+                        $this->keyBoardService->getKeyboardYesOrNo()
+                    );
 
 
                 } else {
@@ -188,9 +221,13 @@ class MessageService
             $this->subjectService->saveSubjects($studentInfo, $chatId);
             $this->userService->saveStudentNumber($chatId, $studentNumber);
 
-            $this->sendMessages($chatId, 'Успешно сохранено');
+            $this->sendMessages(
+                $chatId,
+                'Успешно сохранено',
+                $this->keyBoardService->getMainKeyboard()
+            );
         } else {
-            $this->sendMessages($chatId, 'Хорошо ;)');
+            $this->sendMessages($chatId, 'Хорошо ;)', $this->keyBoardService->getMainKeyboard());
         }
         $this->setNextHandler($chatId, null);
     }
