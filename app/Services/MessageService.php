@@ -5,6 +5,7 @@ namespace App\Services;
 
 use App\Jobs\ProcessPomodoroTimer;
 use App\Models\Subject;
+use App\Models\User;
 use App\Services\Keyboard\Abstracts\KeyboardInterface;
 use App\Services\ParserKT\Abstracts\ArrToStrKtInterface;
 use App\Services\ParserKT\Abstracts\ParserKtInterface;
@@ -12,6 +13,7 @@ use App\Services\Subject\Abstracts\SubjectInterface;
 use App\Services\Task\Abstracts\TaskInterface;
 use App\Services\User\Abstracts\UserInterface;
 use GuzzleHttp\Client;
+use Illuminate\Queue\Jobs\Job;
 use Predis\Client as Predis;
 use Illuminate\Support\Facades\Log;
 
@@ -48,6 +50,7 @@ class MessageService
         $this->client = new Client(
             ['base_uri' => $this->baseUrl . 'bot' . $this->token . '/']
         );
+
         $this->predisClient = new Predis([
             'scheme' => 'tcp',
             'host' => config("database.redis.default.host"),
@@ -138,9 +141,9 @@ class MessageService
 
                     $chatId = $result['callback_query']['from']['id'];
                     $phrase = $result['callback_query']['data'];
-                    $this->answerCallbackQuery($result['callback_query']);
 
-                    $this->actionInlineButtonSubjects($chatId, $phrase);
+                    $this->actionInlineButtonSubjects($chatId, $phrase, $result['callback_query']);
+
                 }
             }
         }
@@ -187,14 +190,26 @@ class MessageService
      * @param $chatId
      * @param $callback_data
      */
-    public function actionInlineButtonSubjects($chatId, $callback_data)
+    public function actionInlineButtonSubjects($chatId, $callback_data, $result)
     {
         $params = explode("_", $callback_data);
         if ($params[0] = 'startPomodoroForId') {
+
             $subject = Subject::findOrFail($params[1]);
-            $job = (new ProcessPomodoroTimer($subject));
-            $pomodoro_time = $this->userInterface->getInfoAboutUser($chatId)->pomodoro_time;
-            dispatch($job)->delay(now()->addMinutes($pomodoro_time));
+
+            $user = User::findOrFail($chatId);
+            if(!$user->is_work){
+                $job = (new ProcessPomodoroTimer($subject));
+                $pomodoro_time = $this->userInterface->getInfoAboutUser($chatId)->pomodoro_time;
+                dispatch($job)->delay(now()->addMinutes($pomodoro_time));
+                $answer = 'Помидор установлен';
+                $user->is_work = true;
+                $user->save();
+            }else{
+                $answer = 'Одновременно нельзя установить больше одного помидора';
+            }
+
+            $this->answerCallbackQuery($result, $answer);
 
         }
     }
@@ -220,12 +235,12 @@ class MessageService
      * @param $callback_data
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function answerCallbackQuery($callback_data)
+    public function answerCallbackQuery($callback_data, $text)
     {
         $response = $this->client->request('GET', 'answerCallbackQuery', [
             'query' => [
                 "callback_query_id" => $callback_data["id"],
-                "text" => "Помидор установлен",
+                "text" => $text,
                 "alert" => true
             ]
         ]);

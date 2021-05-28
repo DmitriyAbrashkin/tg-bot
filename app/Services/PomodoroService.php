@@ -20,5 +20,9 @@ class PomodoroService
         $this->messageService->sendMessages($subject->user_id, 'Ваш помидор истек, вам начисленна 1 монетка. Так держать!');
         $subject->count_pomodoro += 1;
         $subject->save();
+
+        $user = User::findOrFail($subject->user_id);
+        $user->is_work = false;
+        $user->save();
     }
 }

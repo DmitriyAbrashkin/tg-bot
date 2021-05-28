@@ -26,7 +26,7 @@ class getUpdates extends Command
     /**
      * Create a new command instance.
      *
-     * @return void
+     * @param MessageService $messagesService
      */
     public function __construct(MessageService $messagesService)
     {
