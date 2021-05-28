@@ -1,11 +1,20 @@
 <?php
 
 
-namespace App\Services;
+namespace App\Services\KeyBoard;
 
 
-class KeyboardService
+use App\Services\Keyboard\Abstracts\KeyboardInterface;
+
+/**
+ * Class KeyboardService
+ * @package App\Services\KeyBoard
+ */
+class KeyboardService implements KeyboardInterface
 {
+    /**
+     * @return false|mixed|string
+     */
     public function getMainKeyboard()
     {
         return json_encode([
@@ -50,6 +59,9 @@ class KeyboardService
         ], true);
     }
 
+    /**
+     * @return false|mixed|string
+     */
     public function getKeyboardYesOrNo()
     {
         return json_encode([

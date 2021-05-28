@@ -3,13 +3,20 @@
 
 namespace App\Services\ParserKT;
 
-
+/**
+ * Class HtmlToObjService
+ * @package App\Services\ParserKT
+ */
 class HtmlToObjService
 {
     public $nameDiscipline;
     public $ktResult;
     public $prop;
 
+    /**
+     * @param $items
+     * @return HtmlToObjService
+     */
     public function get_kt_from_string($items): HtmlToObjService
     {
         $studyInfo = new HtmlToObjService();

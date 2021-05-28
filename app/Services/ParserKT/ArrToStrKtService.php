@@ -3,10 +3,19 @@
 
 namespace App\Services\ParserKT;
 
+use App\Services\ParserKT\Abstracts\ArrToStrKtInterface;
 
-class ArrToStrKtService
+/**
+ * Class ArrToStrKtService
+ * @package App\Services\ParserKT
+ */
+class ArrToStrKtService implements ArrToStrKtInterface
 {
 
+    /**
+     * @param $arr
+     * @return string
+     */
     public function toStr($arr)
     {
         $result = 'Текущая успеваемость для: ' . $arr->nameStudent . PHP_EOL . PHP_EOL;
@@ -32,7 +41,12 @@ class ArrToStrKtService
         return $result;
     }
 
-
+    /**
+     * @param $item
+     * @param string $resKt
+     * @param string $resProp
+     * @return string[]
+     */
     public function getInfoSubject($item, string $resKt, string $resProp): array
     {
         foreach ($item->ktResult as $kt)
