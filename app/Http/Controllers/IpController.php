@@ -32,8 +32,6 @@ class IpController extends Controller
          $studentInfo = new ParserKtService();
          $studentInfo->getInfoAboutStudent($number);
          $this->arrToKtService->toStr($studentInfo);
-         $subjectService = new SubjectService();
-         $subjectService->saveSubjects($studentInfo, 436545935);
 
          return response()->json($studentInfo, 200, array('Content-Type' => 'application/json;charset=utf8'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }

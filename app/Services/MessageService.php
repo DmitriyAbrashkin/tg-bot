@@ -58,7 +58,7 @@ class MessageService
                     $phrase = $result['message']['text'];
 
                     $chatId = $result['message']['from']['id'];
-                    Log::channel('daily')->info(': Сообщение от : ' . $result['message']['from']['username'] . ' - ' . $phrase);
+                    Log::channel('daily')->info(': Сообщение от : ' . $result['message']['from']['first_name'] . ' - ' . $phrase);
 
                     $fucName = $this->predisClient->get($chatId);
                     if ($fucName != null && method_exists($this, $fucName)) {
@@ -66,11 +66,9 @@ class MessageService
                     } else {
                         switch ($phrase) {
                             case '/start':
-
                                 $this->userService->saveInfoAboutUser(
                                     $result['message']['from']['first_name'],
                                     $result['message']['from']['last_name'],
-                                    $result['message']['from']['username'],
                                     $chatId
                                 );
 
@@ -109,6 +107,7 @@ class MessageService
                         }
                     }
                 } elseif (isset($result['callback_query'])) {
+
                     $this->predisClient->set('update_id', $result['update_id']);
 
                     $chatId = $result['callback_query']['from']['id'];
@@ -128,6 +127,7 @@ class MessageService
         $subjects = $this->subjectService->getAllForUser($chatId);
         $allPomodoro = 0;
         $result = '';
+
         foreach ($subjects as $subject) {
             $result .= $subject->name . ' -  ' . $subject->count_pomodoro . PHP_EOL;
             $allPomodoro += $subject->count_pomodoro;

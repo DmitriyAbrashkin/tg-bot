@@ -6,8 +6,6 @@ namespace App\Services;
 
 use App\Models\Subject;
 use App\Services\ParserKT\ParserKtService;
-use Carbon\Carbon;
-use Carbon\CarbonImmutable;
 
 class SubjectService
 {
