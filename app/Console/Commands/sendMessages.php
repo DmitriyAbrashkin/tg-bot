@@ -28,10 +28,10 @@ class sendMessages extends Command
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(MessageService $messageService)
     {
         parent::__construct();
-        $this->messageService =  new MessageService();
+        $this->messageService = $messageService;
     }
 
     /**

@@ -31,10 +31,10 @@ class pomodoroCheck extends Command
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(PomodoroService $pomodoroService)
     {
         parent::__construct();
-        $this->pomodoroService = new PomodoroService();
+        $this->pomodoroService = $pomodoroService;
     }
 
     /**

@@ -5,16 +5,25 @@ namespace App\Services\ParserKT;
 
 use App\Models\Subject;
 use App\Models\SubjectStat;
+use App\Services\ParserKT\Abstracts\ParserKtInterface;
 use DiDom\Document;
 use App\Services\ParserKT\HtmlToObjService;
 
-class ParserKtService
+/**
+ * Class ParserKtService
+ * @package App\Services\ParserKT
+ */
+class ParserKtService implements  ParserKtInterface
 {
     public $nameStudent;
     public $number;
     public $studyInfo;
 
-
+    /**
+     * @param $number
+     * @return mixed|void
+     * @throws \DiDom\Exceptions\InvalidSelectorException
+     */
     public function getInfoAboutStudent($number)
     {
         $this->number = $number;

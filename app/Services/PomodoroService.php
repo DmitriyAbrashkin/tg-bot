@@ -10,9 +10,9 @@ class PomodoroService
 {
     private $messageService;
 
-    public function __construct()
+    public function __construct(MessageService $messageService)
     {
-        $this->messageService = new MessageService();
+        $this->messageService = $messageService;
     }
 
     public function checkPomodoro(Subject $subject)

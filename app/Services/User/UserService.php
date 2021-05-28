@@ -1,13 +1,23 @@
 <?php
 
-
-namespace App\Services;
+namespace App\Services\User;
 
 use App\Models\User;
+use App\Services\User\Abstracts\UserInterface;
 
-class UserService
+/**
+ * Class UserService
+ * @package App\Services\User
+ */
+class UserService implements UserInterface
 {
-
+    /**
+     * @param $firstName
+     * @param $lastName
+     * @param $userName
+     * @param $tgId
+     * @return mixed|void
+     */
     public function saveInfoAboutUser($firstName, $lastName, $userName, $tgId)
     {
         $user = $this->getInfoAboutUser($tgId);
@@ -29,6 +39,11 @@ class UserService
 
     }
 
+    /**
+     * @param $tgId
+     * @param $studentNumber
+     * @return mixed|void
+     */
     public function saveStudentNumber($tgId, $studentNumber)
     {
         $user = $this->getInfoAboutUser($tgId);
@@ -36,6 +51,10 @@ class UserService
         $user->save();
     }
 
+    /**
+     * @param $tgId
+     * @return mixed
+     */
     public function getInfoAboutUser($tgId)
     {
         return User::find($tgId);

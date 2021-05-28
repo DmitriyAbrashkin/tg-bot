@@ -1,14 +1,21 @@
 <?php
 
 
-namespace App\Services;
-
+namespace App\Services\Task;
 
 use App\Models\Task;
+use App\Services\Task\Abstracts\TaskInterface;
 
-class TaskService
+/**
+ * Class TaskService
+ * @package App\Services\Task
+ */
+class TaskService implements TaskInterface
 {
-
+    /**
+     * @param $id
+     * @return false|string
+     */
     public function getTasksForSubject($id)
     {
         $tasks = Task::all()->where('subject_id', $id);
@@ -40,6 +47,10 @@ class TaskService
 
     }
 
+    /**
+     * @param $idSub
+     * @param $content
+     */
     public function saveTask($idSub, $content)
     {
         Task::create([

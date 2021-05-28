@@ -28,17 +28,17 @@ class getUpdates extends Command
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(MessageService $messagesService)
     {
         parent::__construct();
-        $this->messagesService = new MessageService();
+        $this->messagesService = $messagesService;
     }
 
     /**
-     * Execute the console command.
-     *
      * @return int
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
+
     public function handle()
     {
         $this->messagesService->getUpdates();
