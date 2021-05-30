@@ -61,4 +61,17 @@ class UserService implements UserInterface
     }
 
 
+
+    /**
+     * @param $user_id
+     * @param $time
+     * @return mixed
+     */
+    public function setNewPomodoroTimer($user_id, $time)
+    {
+        User::firstWhere('id', $user_id)->update(
+            [
+                'pomodoro_time' => $time,
+            ]);
+    }
 }

@@ -43,9 +43,14 @@ class SubjectService implements SubjectInterface
      */
     public function saveSubjects(ParserKtService $studentInfo, $chatId)
     {
+        Subject::where('user_id', $chatId)->delete();
         foreach ($studentInfo->studyInfo as $item) {
             $this->addSubject($item->nameDiscipline, $chatId);
         }
+    }
+
+    public function clearSubjects($chatId){
+        $this->getAllForUser($chatId)->delete();
     }
 
     /**

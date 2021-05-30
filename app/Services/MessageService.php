@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\Keyboard\Abstracts\KeyboardInterface;
 use App\Services\ParserKT\Abstracts\ArrToStrKtInterface;
 use App\Services\ParserKT\Abstracts\ParserKtInterface;
+use App\Services\Pomodoro\Abstracts\PomodoroInterface;
 use App\Services\Subject\Abstracts\SubjectInterface;
 use App\Services\Task\Abstracts\TaskInterface;
 use App\Services\User\Abstracts\UserInterface;
@@ -31,9 +32,9 @@ class MessageService
     private ArrToStrKtInterface $arrToKtInterface;
     private UserInterface $userInterface;
     private SubjectInterface $subjectInterface;
-    private TaskInterface $tasksInterface;
     private KeyboardInterface $keyBoardInterface;
     private ParserKtInterface $parserKtInterface;
+    private TaskInterface $tasksInterface;
 
     public function __construct(
         ArrToStrKtInterface $arrToKtInterface,
@@ -89,7 +90,7 @@ class MessageService
                     Log::channel('daily')->info(': Сообщение от : ' . $result['message']['from']['username'] . ' - ' . $phrase);
 
                     $fucName = $this->predisClient->get($chatId);
-                    if ($fucName != null && method_exists($this, $fucName)) {
+                    if ($phrase != 'Назад' && $fucName != null && method_exists($this, $fucName) ) {
                         $this->{$fucName}($phrase, $chatId); // магия php
                     } else {
                         switch ($phrase) {
@@ -128,8 +129,20 @@ class MessageService
                             case 'Помощь':
                                 $this->sendMessages($chatId, 'https://telegra.ph/Kak-rabotat-s-botom-05-20');
                                 break;
-                            case 'Статистика':
+                            case 'Профиль':
                                 $this->statistics($chatId);
+                                break;
+                            case 'Изменить номер зачетки':
+                                $this->setNextHandler($chatId, 'getMyKT');
+                                $this->sendMessages($chatId, 'Напишите номер зачетки');
+                                break;
+                            case 'Изменить время помидора':
+                                $this->setNextHandler($chatId, 'setNewPomodoroTimer');
+                                $this->sendMessages($chatId, 'Напишите время нового таймера в минутах');
+                                break;
+                            case 'Назад':
+                                $this->setNextHandler($chatId, null);
+                                $this->sendMessages($chatId, 'Чем я могу вам помочь?', $this->keyBoardInterface->getMainKeyboard());
                                 break;
                             default:
                                 $this->sendMessages($chatId, 'Неизвестная команда');
@@ -149,6 +162,17 @@ class MessageService
         }
     }
 
+    public function setNewPomodoroTimer($phrase, $chatId){
+        if (ctype_digit($phrase) && $phrase > 0) {
+            $this->userInterface->setNewPomodoroTimer($chatId, $phrase);
+            $this->setNextHandler($chatId, null);
+            $this->sendMessages($chatId, 'Успешно сохранено');
+        }else{
+            $this->sendMessages($chatId, 'Некорректное время, пожалуйста введите число больше 0');
+        }
+
+    }
+
     /**
      * @param $chatId
      */
@@ -165,11 +189,13 @@ class MessageService
 
         $this->sendMessages(
             $chatId,
+
             $user->first_name . PHP_EOL .
             'Уровень ' . $user->level . PHP_EOL .
             'Время помидора ' . $user->pomodoro_time . PHP_EOL .
             $result . PHP_EOL .
-            'Всего помидоров ' . $allPomodoro
+            'Всего помидоров ' . $allPomodoro,
+            $this->keyBoardInterface->getProfileKeyboard()
 
         );
     }
@@ -331,7 +357,7 @@ class MessageService
             $this->sendMessages(
                 $chatId,
                 'Успешно сохранено',
-                $this->keyBoardSInterface->getMainKeyboard()
+                $this->keyBoardInterface->getMainKeyboard()
             );
         } else {
             $this->sendMessages($chatId, 'Хорошо ;)', $this->keyBoardInterface->getMainKeyboard());

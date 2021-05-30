@@ -19,4 +19,9 @@ interface KeyboardInterface
      */
     public function getKeyboardYesOrNo();
 
+    /**
+     * @return mixed
+     */
+    public function getProfileKeyboard();
+
 }

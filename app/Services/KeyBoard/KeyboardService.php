@@ -38,7 +38,7 @@ class KeyboardService implements KeyboardInterface
                     ],
                     // вторая кнопка второго ряда клавиатуры
                     [
-                        "text" => "Статистика",
+                        "text" => "Профиль",
                     ]
                 ],
                 // третий ряд клавиатуры
@@ -75,6 +75,42 @@ class KeyboardService implements KeyboardInterface
                         "text" => "Да",
                     ]
                 ],
+            ],
+            'one_time_keyboard' => false,
+            'resize_keyboard' => true,
+            'selective' => true,
+        ], true);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getProfileKeyboard()
+    {
+        return json_encode([
+            "keyboard" => [
+                // первый ряд кнопок клавиатуры
+                [
+                    // первая кнопка первого ряда клавиатуры
+                    [
+                        "text" => "Изменить время помидора",
+                    ],
+                ],
+                // второй ряд клавиатуры
+                [
+                    // первая кнопка второго ряда клавиатуры
+                    [
+                        "text" => "Изменить номер зачетки",
+                    ],
+                ],
+                // третий ряд клавиатуры
+                [
+                    // третья кнопка второго ряда клавиатуры
+                    [
+                        "text" => "Назад",
+                    ]
+                ]
+
             ],
             'one_time_keyboard' => false,
             'resize_keyboard' => true,

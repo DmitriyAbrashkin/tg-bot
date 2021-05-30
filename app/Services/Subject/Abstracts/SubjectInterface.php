@@ -30,6 +30,8 @@ interface SubjectInterface
      */
     public function saveSubjects(ParserKtService $studentInfo, $chatId);
 
+    public function clearSubjects($chatId);
+
     /**
      * @param $subjects
      * @return mixed

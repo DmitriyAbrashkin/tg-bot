@@ -32,4 +32,12 @@ interface UserInterface
      */
     public function getInfoAboutUser($tgId);
 
+
+    /**
+     * @param $user_id
+     * @param $time
+     * @return mixed
+     */
+    public function setNewPomodoroTimer($user_id, $time);
+
 }
