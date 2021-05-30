@@ -7,6 +7,7 @@ namespace App\Services\Subject;
 use App\Models\Subject;
 use App\Services\ParserKT\ParserKtService;
 use App\Services\Subject\Abstracts\SubjectInterface;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class SubjectService
@@ -14,6 +15,7 @@ use App\Services\Subject\Abstracts\SubjectInterface;
  */
 class SubjectService implements SubjectInterface
 {
+
     /**
      * @param $name
      * @param $chatId
@@ -25,6 +27,14 @@ class SubjectService implements SubjectInterface
             'name' => $name,
             'user_id' => $chatId
         ]);
+    }
+
+    /**
+     * @param $id
+     */
+    public function deleteSubject($id)
+    {
+        DB::table("subjects")->delete($id);
     }
 
     /**
@@ -49,8 +59,18 @@ class SubjectService implements SubjectInterface
         }
     }
 
-    public function clearSubjects($chatId){
+    public function clearSubjects($chatId)
+    {
         $this->getAllForUser($chatId)->delete();
+    }
+
+    /**
+     * @param $name
+     * @param $id
+     * @return mixed|void
+     */
+    public function editSubject($name, $id){
+       Subject::find($id)->update(['name' => $name]);
     }
 
     /**
@@ -59,7 +79,12 @@ class SubjectService implements SubjectInterface
      */
     public function getAnswerAllSubject($subjects)
     {
-        $buttons = [];
+        $buttons['inline_keyboard'][] = [
+            [
+                "text" => "Добавить",
+                "callback_data" => "addSubjectId_",
+            ]
+        ];
 
         foreach ($subjects as $subject) {
             $buttons['inline_keyboard'][] = [
@@ -68,9 +93,16 @@ class SubjectService implements SubjectInterface
                     "text" => $subject->name,
                     "callback_data" => "startPomodoroForId_" . $subject->id,
                 ],
+                [
+                    "text" => "Удалить",
+                    "callback_data" => "deleteSubjectId_" . $subject->id,
+                ],
+                [
+                    "text" => 'Отредактировать',
+                    "callback_data" => "editSubjectId_" . $subject->id,
+                ]
             ];
         }
-
         return json_encode($buttons, true);
     }
 }

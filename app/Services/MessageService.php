@@ -17,12 +17,12 @@ use GuzzleHttp\Client;
 use Illuminate\Queue\Jobs\Job;
 use Predis\Client as Predis;
 use Illuminate\Support\Facades\Log;
+use function PHPUnit\Framework\isEmpty;
 
 /**
  * Class MessageService
  * @package App\Services
  */
-
 class MessageService
 {
     private $baseUrl;
@@ -35,6 +35,7 @@ class MessageService
     private KeyboardInterface $keyBoardInterface;
     private ParserKtInterface $parserKtInterface;
     private TaskInterface $tasksInterface;
+    private string $elementId;
 
     public function __construct(
         ArrToStrKtInterface $arrToKtInterface,
@@ -88,10 +89,14 @@ class MessageService
 
                     $chatId = $result['message']['from']['id'];
                     Log::channel('daily')->info(': Сообщение от : ' . $result['message']['from']['username'] . ' - ' . $phrase);
-
                     $fucName = $this->predisClient->get($chatId);
-                    if ($phrase != 'Назад' && $fucName != null && method_exists($this, $fucName) ) {
-                        $this->{$fucName}($phrase, $chatId); // магия php
+
+                    $params = explode("_", $fucName);
+                    if (isset($params[1])) $this->elementId = $params[1];
+                    else $this->elementId = "";
+                    // $this->sendMessages($chatId, $this->elementId);
+                    if ($phrase != 'Назад' && $params[0] != null && method_exists($this, $params[0])) {
+                        $this->{$params[0]}($phrase, $chatId); // магия php
                     } else {
                         switch ($phrase) {
                             case '/start':
@@ -162,12 +167,13 @@ class MessageService
         }
     }
 
-    public function setNewPomodoroTimer($phrase, $chatId){
+    public function setNewPomodoroTimer($phrase, $chatId)
+    {
         if (ctype_digit($phrase) && $phrase > 0) {
             $this->userInterface->setNewPomodoroTimer($chatId, $phrase);
             $this->setNextHandler($chatId, null);
             $this->sendMessages($chatId, 'Успешно сохранено');
-        }else{
+        } else {
             $this->sendMessages($chatId, 'Некорректное время, пожалуйста введите число больше 0');
         }
 
@@ -201,43 +207,122 @@ class MessageService
     }
 
     /**
+     * @param $chatId
+     * @param $callback_data
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function actionInlineButtonSubjects($chatId, $callback_data, $result)
+    {
+        $params = explode("_", $callback_data);
+//        if ($params[0] = 'startPomodoroForId') {
+//
+//            $subject = Subject::findOrFail($params[1]);
+//
+//            $user = User::findOrFail($chatId);
+//            if(!$user->is_work){
+//                $job = (new ProcessPomodoroTimer($subject));
+//                $pomodoro_time = $this->userInterface->getInfoAboutUser($chatId)->pomodoro_time;
+//                dispatch($job)->delay(now()->addMinutes($pomodoro_time));
+//                $answer = 'Помидор установлен';
+//                $user->is_work = true;
+//                $user->save();
+//            }else{
+//                $answer = 'Одновременно нельзя установить больше одного помидора';
+//            }
+//
+//            $this->answerCallbackQuery($result, $answer);
+//
+//        }
+
+        if ($params[0] == 'startPomodoroForId') {
+            $this->showTaskForId($chatId, $params[1]);
+        }
+
+        if ($params[0] == 'deleteSubjectId') {
+            $this->subjectInterface->deleteSubject($params[1]);
+            $this->sendMessages($chatId, 'Категория удалена');
+        }
+
+        if ($params[0] == 'addSubjectId') {
+            $this->setNextHandler($chatId, 'addSubject');
+            $this->sendMessages($chatId, 'Напишите название категории');
+        }
+
+        if ($params[0] == 'editSubjectId') {
+            $params = 'editSubject_' . $params[1];
+            $this->setNextHandler($chatId, $params);
+            $this->sendMessages($chatId, 'Напишите новое название категории');
+        }
+
+        if ($params[0] == 'addTaskId') {
+            $params = 'addTask_' . $params[1];
+            $this->setNextHandler($chatId, $params);
+            $this->sendMessages($chatId, 'Напишите задание');
+        }
+
+        if ($params[0] == 'deleteTaskId') {
+            $this->tasksInterface->deleteTask($params[1]);
+            $this->sendMessages($chatId, 'Задача удалена');
+        }
+
+        if ($params[0] == 'editTaskId') {
+            $params = 'editTask_' . $params[1];
+            $this->setNextHandler($chatId, $params);
+            $this->sendMessages($chatId, 'Напишите новое задание');
+        }
+
+        if ($params[0] == 'showTaskId') {
+            $content = $this->tasksInterface->showTask($params[1]);
+
+            foreach ($content as $el) {
+                $stringContent = $el->content;
+            }
+
+            $buttons = $this->tasksInterface->getTaskForStart($params[1]);
+            $this->sendMessages($chatId, $stringContent, $buttons);
+        }
+    }
+
+    /**
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function editSubject($phrase, $chatId)
+    {
+        $this->subjectInterface->editSubject($phrase, $this->elementId);
+        $this->sendMessages($chatId, 'Категория успешно изменена');
+        $this->setNextHandler($chatId, null);
+        $this->showAllSubject($chatId);
+    }
+
+    /**
      * @param $phrase
      * @param $chatId
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function addSubject($phrase, $chatId)
     {
         $this->subjectInterface->addSubject($phrase, $chatId);
         $this->sendMessages($chatId, 'Категория успешно добавлена');
-        $this->showAllSubject($chatId);
         $this->setNextHandler($chatId, null);
+        $this->showAllSubject($chatId);
     }
 
     /**
-     * @param $chatId
-     * @param $callback_data
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function actionInlineButtonSubjects($chatId, $callback_data, $result)
+    public function addTask($phrase, $chatId)
     {
-        $params = explode("_", $callback_data);
-        if ($params[0] = 'startPomodoroForId') {
+        $this->tasksInterface->addTask($this->elementId, $phrase);
+        $this->sendMessages($chatId, 'Задание успешно добавлено');
+        $this->setNextHandler($chatId, null);
+        $this->showTaskForId($chatId, $this->elementId);
+    }
 
-            $subject = Subject::findOrFail($params[1]);
-
-            $user = User::findOrFail($chatId);
-            if(!$user->is_work){
-                $job = (new ProcessPomodoroTimer($subject));
-                $pomodoro_time = $this->userInterface->getInfoAboutUser($chatId)->pomodoro_time;
-                dispatch($job)->delay(now()->addMinutes($pomodoro_time));
-                $answer = 'Помидор установлен';
-                $user->is_work = true;
-                $user->save();
-            }else{
-                $answer = 'Одновременно нельзя установить больше одного помидора';
-            }
-
-            $this->answerCallbackQuery($result, $answer);
-
-        }
+    public function editTask($phrase, $chatId)
+    {
+        $this->tasksInterface->editTask($phrase, $this->elementId);
+        $this->sendMessages($chatId, 'Задание успешно изменено');
+        $this->setNextHandler($chatId, null);
     }
 
     /**
@@ -299,7 +384,7 @@ class MessageService
                 $this->setNextHandler($chatId, null);
             }
         } else {
-            $this->sendMessages($chatId, 'Неккоректный номер зачетки' . PHP_EOL . 'Пожалуйста, повторите попытку.');
+            $this->sendMessages($chatId, 'Некоректный номер зачетки' . PHP_EOL . 'Пожалуйста, повторите попытку.');
         }
     }
 
@@ -374,6 +459,12 @@ class MessageService
         $subjects = $this->subjectInterface->getAllForUser($chatId);
         $answer = $this->subjectInterface->getAnswerAllSubject($subjects);
         $this->sendMessages($chatId, 'Предметы:', $answer);
+    }
+
+    public function showTaskForId($chatId, $subjectId): void
+    {
+        $buttons = $this->tasksInterface->getTasksForSubject($subjectId);
+        $this->sendMessages($chatId, 'Список заданий:', $buttons);
     }
 
 }

@@ -15,8 +15,8 @@ class Subject extends Model
         'id_stats_subject',
     ];
 
-    public function subject()
+    public function task()
     {
-        return $this->hasOne(Subject::class);
+        return $this->hasMany(Task::class);
     }
 }

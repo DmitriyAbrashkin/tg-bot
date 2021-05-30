@@ -8,7 +8,7 @@ use App\Models\User;
 
 class PomodoroService
 {
-    private $messageService;
+    private MessageService $messageService;
 
     public function __construct(MessageService $messageService)
     {

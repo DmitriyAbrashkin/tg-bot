@@ -19,23 +19,18 @@ class ProcessPomodoroTimer implements ShouldQueue
      *
      * @return void
      */
-    protected  $subject;
-    protected $pomodoroService;
+    protected $subject;
+    protected PomodoroService $pomodoroService;
 
-    public function __construct(Subject $subject)
+    public function __construct($subject, PomodoroService $pomodoroService)
     {
         $this->subject = $subject;
+        $this->pomodoroService = $pomodoroService;
     }
 
-    /**
-     * Execute the job.
-     *
-     * @param Subject $subject
-     * @return void
-     */
+
     public function handle()
     {
-        $this->pomodoroService = new PomodoroService();
         $this->pomodoroService->checkPomodoro($this->subject);
     }
 }

@@ -18,6 +18,13 @@ interface SubjectInterface
     public function addSubject($name, $chatId);
 
     /**
+     * @param $name
+     * @param $id
+     * @return mixed
+     */
+    public function editSubject($name, $id);
+
+    /**
      * @param $id
      * @return mixed
      */
@@ -30,6 +37,16 @@ interface SubjectInterface
      */
     public function saveSubjects(ParserKtService $studentInfo, $chatId);
 
+    /**
+     * @param $id
+     * @return mixed
+     */
+    public function deleteSubject($id);
+
+    /**
+     * @param $chatId
+     * @return mixed
+     */
     public function clearSubjects($chatId);
 
     /**

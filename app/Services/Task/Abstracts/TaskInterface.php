@@ -16,10 +16,35 @@ interface TaskInterface
     public function getTasksForSubject($id);
 
     /**
+     * @param $id
+     * @return mixed
+     */
+    public function getTaskForStart($id);
+
+    /**
+     * @param $id
+     * @return mixed
+     */
+    public function showTask($id);
+
+    /**
+     * @param $id
+     * @return mixed
+     */
+    public function deleteTask($id);
+
+    /**
+     * @param $content
+     * @param $id
+     * @return mixed
+     */
+    public function editTask($content, $id);
+
+    /**
      * @param $idSub
      * @param $content
      * @return mixed
      */
-    public function saveTask($idSub, $content);
+    public function addTask($idSub, $content);
 
 }
