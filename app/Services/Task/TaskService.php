@@ -19,7 +19,7 @@ class TaskService implements TaskInterface
      */
     public function showTask($id)
     {
-       return DB::table("tasks")->where('id', $id)->get("content")->values();
+        return DB::table("tasks")->where('id', $id)->get()->values();
     }
 
     /**
@@ -32,20 +32,46 @@ class TaskService implements TaskInterface
     }
 
     /**
-     * @param $content
+     * @param array $data
      * @param $id
      * @return mixed|void
      */
-    public function editTask($content, $id)
+    public function editTask(array $data, $id)
     {
-        Task::find($id)->update(['content' => $content]);
+        Task::find($id)->update($data);
     }
 
     /**
      * @param $id
      * @return false|string
      */
-    public function getTasksForSubject($id)
+    public function getTasksForSubjectShow($id)
+    {
+        $tasks = Task::all()->where('subject_id', $id);
+
+        $buttons['inline_keyboard'][] = [
+            [
+                "text" => "Добавить",
+                "callback_data" => "addTaskId_" . $id,
+            ],
+            [
+                "text" => "Изменить или удалить",
+                "callback_data" => "buttonEditTaskId_" . $id,
+            ]
+        ];
+
+        foreach ($tasks as $task) {
+            $buttons['inline_keyboard'][] = [
+                [
+                    "text" => $task->title,
+                    "callback_data" => "showTaskForId_" . $task->id,
+                ]
+            ];
+        }
+        return json_encode($buttons, true);
+    }
+
+    public function getTasksForSubjectEdit($id)
     {
         $tasks = Task::all()->where('subject_id', $id);
 
@@ -60,32 +86,28 @@ class TaskService implements TaskInterface
             $buttons['inline_keyboard'][] = [
 
                 [
-                    "text" => $task->content,
-                    "callback_data" => "showTaskId_" . $task->id,
-                ],
-
-                [
-                    "text" => "Удалить",
-                    "callback_data" => "deleteTaskId_" . $task->id,
+                    "text" => $task->title,
+                    "callback_data" => "showTaskForId_" . $task->id,
                 ],
                 [
-                    "text" => 'Отредактировать',
+                    "text" => '✏',
                     "callback_data" => "editTaskId_" . $task->id,
+                ],
+                [
+                    "text" => "🚫",
+                    "callback_data" => "deleteTaskId_" . $task->id,
                 ]
-
             ];
         }
         return json_encode($buttons, true);
     }
-
-
 
     public function getTaskForStart($id)
     {
         $buttons['inline_keyboard'][] = [
             [
                 "text" => "Начать",
-                "callback_data" => "startTaskId_" . $id,
+                "callback_data" => "startPomodoroForId_" . $id,
             ]
         ];
 
@@ -94,12 +116,13 @@ class TaskService implements TaskInterface
 
     /**
      * @param $idSub
-     * @param $content
+     * @param $title
+     * @return mixed
      */
-    public function addTask($idSub, $content)
+    public function addTask($idSub, $title)
     {
-        Task::create([
-            'content' => $content,
+        return Task::create([
+            'title' => $title,
             'subject_id' => $idSub
         ]);
     }

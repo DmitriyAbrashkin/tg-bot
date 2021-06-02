@@ -14,23 +14,19 @@ class ProcessPomodoroTimer implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * Create a new job instance.
-     *
-     * @return void
-     */
     protected $subject;
-    protected PomodoroService $pomodoroService;
 
-    public function __construct($subject, PomodoroService $pomodoroService)
+    /**
+     * ProcessPomodoroTimer constructor.
+     * @param $subject
+     */
+    public function __construct($subject)
     {
         $this->subject = $subject;
-        $this->pomodoroService = $pomodoroService;
     }
 
-
-    public function handle()
+    public function handle(PomodoroService $pomodoroService)
     {
-        $this->pomodoroService->checkPomodoro($this->subject);
+        $pomodoroService->checkPomodoro($this->subject);
     }
 }

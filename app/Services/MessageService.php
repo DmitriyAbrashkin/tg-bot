@@ -15,6 +15,7 @@ use App\Services\Task\Abstracts\TaskInterface;
 use App\Services\User\Abstracts\UserInterface;
 use GuzzleHttp\Client;
 use Illuminate\Queue\Jobs\Job;
+use Illuminate\Support\Facades\DB;
 use Predis\Client as Predis;
 use Illuminate\Support\Facades\Log;
 use function PHPUnit\Framework\isEmpty;
@@ -102,9 +103,9 @@ class MessageService
                             case '/start':
 
                                 $this->userInterface->saveInfoAboutUser(
-                                    $result['message']['from']['first_name'],
-                                    $result['message']['from']['last_name'],
-                                    $result['message']['from']['username'],
+                                    $result['message']['from']['first_name'] ?? "noName",
+                                    $result['message']['from']['last_name'] ?? "noLastName",
+                                    $result['message']['from']['username'] ?? "noUsername",
                                     $chatId
                                 );
 
@@ -214,19 +215,26 @@ class MessageService
     public function actionInlineButtonSubjects($chatId, $callback_data, $result)
     {
         $params = explode("_", $callback_data);
+
+        //Если не работаю кнопки закомменти условие
 //        if ($params[0] = 'startPomodoroForId') {
-//
 //            $subject = Subject::findOrFail($params[1]);
 //
 //            $user = User::findOrFail($chatId);
-//            if(!$user->is_work){
-//                $job = (new ProcessPomodoroTimer($subject));
+//
+////                 Хотел заменить но перестали работать кнопки
+////                $subject = DB::table('subjects')->find($params[1]);
+////                $user = DB::table('users')->find($chatId);
+//
+//
+//            if (!$user->is_work) {
+//                $job = new ProcessPomodoroTimer($subject);
 //                $pomodoro_time = $this->userInterface->getInfoAboutUser($chatId)->pomodoro_time;
 //                dispatch($job)->delay(now()->addMinutes($pomodoro_time));
 //                $answer = 'Помидор установлен';
 //                $user->is_work = true;
 //                $user->save();
-//            }else{
+//            } else {
 //                $answer = 'Одновременно нельзя установить больше одного помидора';
 //            }
 //
@@ -234,8 +242,13 @@ class MessageService
 //
 //        }
 
-        if ($params[0] == 'startPomodoroForId') {
+        if ($params[0] == 'showTasks') {
             $this->showTaskForId($chatId, $params[1]);
+        }
+
+        if ($params[0] == 'buttonEditTaskId') {
+            $buttons = $this->tasksInterface->getTasksForSubjectEdit($params[1]);
+            $this->sendMessages($chatId, 'Список заданий:', $buttons);
         }
 
         if ($params[0] == 'deleteSubjectId') {
@@ -257,7 +270,7 @@ class MessageService
         if ($params[0] == 'addTaskId') {
             $params = 'addTask_' . $params[1];
             $this->setNextHandler($chatId, $params);
-            $this->sendMessages($chatId, 'Напишите задание');
+            $this->sendMessages($chatId, 'Напишите название задания');
         }
 
         if ($params[0] == 'deleteTaskId') {
@@ -266,20 +279,27 @@ class MessageService
         }
 
         if ($params[0] == 'editTaskId') {
-            $params = 'editTask_' . $params[1];
+            $params = 'editTaskTitle_' . $params[1];
             $this->setNextHandler($chatId, $params);
-            $this->sendMessages($chatId, 'Напишите новое задание');
+            $this->sendMessages($chatId, 'Напишите новое название задания');
         }
 
-        if ($params[0] == 'showTaskId') {
+        if ($params[0] == 'showTaskForId') {
             $content = $this->tasksInterface->showTask($params[1]);
 
             foreach ($content as $el) {
-                $stringContent = $el->content;
+                $stringContent[0] = $el->title;
+                $stringContent[1] = $el->content;
             }
 
             $buttons = $this->tasksInterface->getTaskForStart($params[1]);
-            $this->sendMessages($chatId, $stringContent, $buttons);
+            $this->sendMessages($chatId, " Название: $stringContent[0]" . PHP_EOL . "Описание:  $stringContent[1]", $buttons);
+        }
+
+        if ($params[0] == 'buttonEditSubjectId') {
+            $subjects = $this->subjectInterface->getAllForUser($chatId);
+            $answer = $this->subjectInterface->getAnswerAllSubjectEdit($subjects);
+            $this->sendMessages($chatId, 'Предметы:', $answer);
         }
     }
 
@@ -312,16 +332,22 @@ class MessageService
      */
     public function addTask($phrase, $chatId)
     {
-        $this->tasksInterface->addTask($this->elementId, $phrase);
-        $this->sendMessages($chatId, 'Задание успешно добавлено');
-        $this->setNextHandler($chatId, null);
-        $this->showTaskForId($chatId, $this->elementId);
+        $arrayTask = $this->tasksInterface->addTask($this->elementId, $phrase);
+        $this->setNextHandler($chatId, "editTaskContent_" . $arrayTask["id"]);
+        $this->sendMessages($chatId, 'Опишите задачу');
     }
 
-    public function editTask($phrase, $chatId)
+    public function editTaskTitle($phrase, $chatId)
     {
-        $this->tasksInterface->editTask($phrase, $this->elementId);
-        $this->sendMessages($chatId, 'Задание успешно изменено');
+        $this->tasksInterface->editTask(["title" => $phrase], $this->elementId);
+        $this->setNextHandler($chatId, "editTaskContent_" . "$this->elementId");
+        $this->sendMessages($chatId, 'Опишите задачу');
+    }
+
+    public function editTaskContent($phrase, $chatId)
+    {
+        $this->tasksInterface->editTask(["content" => $phrase], $this->elementId);
+        $this->sendMessages($chatId, 'Выполнено');
         $this->setNextHandler($chatId, null);
     }
 
@@ -457,13 +483,13 @@ class MessageService
     public function showAllSubject($chatId): void
     {
         $subjects = $this->subjectInterface->getAllForUser($chatId);
-        $answer = $this->subjectInterface->getAnswerAllSubject($subjects);
+        $answer = $this->subjectInterface->getAnswerAllSubjectShow($subjects);
         $this->sendMessages($chatId, 'Предметы:', $answer);
     }
 
     public function showTaskForId($chatId, $subjectId): void
     {
-        $buttons = $this->tasksInterface->getTasksForSubject($subjectId);
+        $buttons = $this->tasksInterface->getTasksForSubjectShow($subjectId);
         $this->sendMessages($chatId, 'Список заданий:', $buttons);
     }
 

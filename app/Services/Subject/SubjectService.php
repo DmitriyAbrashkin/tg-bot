@@ -69,15 +69,41 @@ class SubjectService implements SubjectInterface
      * @param $id
      * @return mixed|void
      */
-    public function editSubject($name, $id){
-       Subject::find($id)->update(['name' => $name]);
+    public function editSubject($name, $id)
+    {
+        Subject::find($id)->update(['name' => $name]);
     }
 
     /**
      * @param $subjects
      * @return false|mixed|string
      */
-    public function getAnswerAllSubject($subjects)
+    public function getAnswerAllSubjectShow($subjects)
+    {
+        $buttons['inline_keyboard'][] = [
+            [
+                "text" => "Добавить",
+                "callback_data" => "addSubjectId_",
+            ],
+            [
+                "text" => "Удалить или изменить",
+                "callback_data" => "buttonEditSubjectId_",
+            ]
+        ];
+
+        foreach ($subjects as $subject) {
+            $buttons['inline_keyboard'][] = [
+
+                [
+                    "text" => $subject->name,
+                    "callback_data" => "showTasks_" . $subject->id,
+                ],
+            ];
+        }
+        return json_encode($buttons, true);
+    }
+
+    public function getAnswerAllSubjectEdit($subjects)
     {
         $buttons['inline_keyboard'][] = [
             [
@@ -91,16 +117,17 @@ class SubjectService implements SubjectInterface
 
                 [
                     "text" => $subject->name,
-                    "callback_data" => "startPomodoroForId_" . $subject->id,
+                    "callback_data" => "showTasks_" . $subject->id,
                 ],
                 [
-                    "text" => "Удалить",
-                    "callback_data" => "deleteSubjectId_" . $subject->id,
-                ],
-                [
-                    "text" => 'Отредактировать',
+                    "text" => '✏',
                     "callback_data" => "editSubjectId_" . $subject->id,
+                ],
+                [
+                    "text" => "🚫",
+                    "callback_data" => "deleteSubjectId_" . $subject->id,
                 ]
+
             ];
         }
         return json_encode($buttons, true);

@@ -13,7 +13,13 @@ interface TaskInterface
      * @param $id
      * @return mixed
      */
-    public function getTasksForSubject($id);
+    public function getTasksForSubjectShow($id);
+
+    /**
+     * @param $id
+     * @return mixed
+     */
+    public function getTasksForSubjectEdit($id);
 
     /**
      * @param $id
@@ -34,17 +40,17 @@ interface TaskInterface
     public function deleteTask($id);
 
     /**
-     * @param $content
+     * @param array $data
      * @param $id
      * @return mixed
      */
-    public function editTask($content, $id);
+    public function editTask(array $data, $id);
 
     /**
      * @param $idSub
      * @param $content
      * @return mixed
      */
-    public function addTask($idSub, $content);
+    public function addTask($idSub, $title);
 
 }

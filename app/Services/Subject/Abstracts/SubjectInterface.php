@@ -53,6 +53,12 @@ interface SubjectInterface
      * @param $subjects
      * @return mixed
      */
-    public function getAnswerAllSubject($subjects);
+    public function getAnswerAllSubjectShow($subjects);
+
+    /**
+     * @param $subjects
+     * @return mixed
+     */
+    public function getAnswerAllSubjectEdit($subjects);
 
 }
