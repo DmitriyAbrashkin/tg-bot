@@ -69,9 +69,8 @@ class UserService implements UserInterface
      */
     public function setNewPomodoroTimer($user_id, $time)
     {
-        User::firstWhere('id', $user_id)->update(
-            [
-                'pomodoro_time' => $time,
-            ]);
+        $user = $this->getInfoAboutUser($user_id);
+        $user->pomodoro_time = $time;
+        $user->save();
     }
 }

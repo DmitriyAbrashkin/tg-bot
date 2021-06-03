@@ -215,32 +215,26 @@ class MessageService
     public function actionInlineButtonSubjects($chatId, $callback_data, $result)
     {
         $params = explode("_", $callback_data);
-
         //Если не работаю кнопки закомменти условие
-//        if ($params[0] = 'startPomodoroForId') {
-//            $subject = Subject::findOrFail($params[1]);
-//
-//            $user = User::findOrFail($chatId);
-//
-////                 Хотел заменить но перестали работать кнопки
-////                $subject = DB::table('subjects')->find($params[1]);
-////                $user = DB::table('users')->find($chatId);
-//
-//
-//            if (!$user->is_work) {
-//                $job = new ProcessPomodoroTimer($subject);
-//                $pomodoro_time = $this->userInterface->getInfoAboutUser($chatId)->pomodoro_time;
-//                dispatch($job)->delay(now()->addMinutes($pomodoro_time));
-//                $answer = 'Помидор установлен';
-//                $user->is_work = true;
-//                $user->save();
-//            } else {
-//                $answer = 'Одновременно нельзя установить больше одного помидора';
-//            }
-//
-//            $this->answerCallbackQuery($result, $answer);
-//
-//        }
+        if ($params[0] == 'startPomodoroForId') {
+
+            $subject = Subject::findOrFail($params[1]);
+            $user = User::findOrFail($chatId);
+
+            if (!$user->is_work) {
+                $job = new ProcessPomodoroTimer($subject);
+                $pomodoro_time = $this->userInterface->getInfoAboutUser($chatId)->pomodoro_time;
+                dispatch($job)->delay(now()->addMinutes($pomodoro_time));
+                $answer = 'Помидор установлен';
+                $user->is_work = true;
+                $user->save();
+            } else {
+                $answer = 'Одновременно нельзя установить больше одного помидора';
+            }
+
+            $this->answerCallbackQuery($result, $answer);
+
+        }
 
         if ($params[0] == 'showTasks') {
             $this->showTaskForId($chatId, $params[1]);
@@ -288,8 +282,8 @@ class MessageService
             $content = $this->tasksInterface->showTask($params[1]);
 
             foreach ($content as $el) {
-                $stringContent[0] = $el->title;
-                $stringContent[1] = $el->content;
+                $stringContent[0] = $el->title ?? 'Без названия';
+                $stringContent[1] = $el->content ?? '';
             }
 
             $buttons = $this->tasksInterface->getTaskForStart($params[1]);

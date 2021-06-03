@@ -63,11 +63,12 @@ class TaskService implements TaskInterface
         foreach ($tasks as $task) {
             $buttons['inline_keyboard'][] = [
                 [
-                    "text" => $task->title,
+                    "text" => $task->title ?? 'Без названия',
                     "callback_data" => "showTaskForId_" . $task->id,
                 ]
             ];
         }
+
         return json_encode($buttons, true);
     }
 
@@ -86,7 +87,7 @@ class TaskService implements TaskInterface
             $buttons['inline_keyboard'][] = [
 
                 [
-                    "text" => $task->title,
+                    "text" => $task->title ?? 'Без названия',
                     "callback_data" => "showTaskForId_" . $task->id,
                 ],
                 [
