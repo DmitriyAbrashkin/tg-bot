@@ -20,23 +20,14 @@ class UserService implements UserInterface
      */
     public function saveInfoAboutUser($firstName, $lastName, $userName, $tgId)
     {
-        $user = $this->getInfoAboutUser($tgId);
-        if ($user == null) {
-            User::create([
+        User::updateOrCreate(
+            [
                 'id' => $tgId,
                 'first_name' => $firstName,
                 'last_name' => $lastName,
                 'username' => $userName,
-            ]);
-        } else {
-            User::firstWhere('id', $tgId)->update(
-                [
-                    'first_name' => $firstName,
-                    'last_name' => $lastName,
-                    'username' => $userName,
-                ]);
-        }
-
+            ]
+        );
     }
 
     /**
@@ -59,7 +50,6 @@ class UserService implements UserInterface
     {
         return User::find($tgId);
     }
-
 
 
     /**
